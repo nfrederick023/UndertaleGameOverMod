@@ -1,0 +1,3 @@
+displayName = Undertale Death Screen
+author = nfrederick023
+version = 0.1

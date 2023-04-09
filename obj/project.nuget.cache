@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "FQa/7NkgothITM51H38/AP2T7RhuLmqH04JfIiGSu/DgIUIKeWM0hVGENNeWmnzQDhINRPUVd3jUKY+mwLwZeQ==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Noah.DESKTOP-FP6SJDR\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\UndertaleDeath\\UndertaleDeath.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Noah.DESKTOP-FP6SJDR\\.nuget\\packages\\tmodloader.codeassist\\0.1.5\\tmodloader.codeassist.0.1.5.nupkg.sha512"
+  ],
+  "logs": []
+}
