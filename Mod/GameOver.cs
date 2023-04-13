@@ -29,6 +29,8 @@ namespace GameOverNamespace
         public static bool isVisible;
         public static bool isMusicPlaying;
         public static bool isRespawning;
+
+        private static float[] musicFade;
         private static UIPanel gameOverScreen;
         private static UIPanel gameOverTextOverlay;
         private static UIImage text;
@@ -43,9 +45,6 @@ namespace GameOverNamespace
         private static int maxTextFrames = 13;
         private static int currentFrame = 0;
 
-        private static float centerX = ((Main.screenWidth) / 2) + 10;
-        private static float centerY = ((Main.screenHeight) / 2);
-
         private static Random rand = new Random();
 
         private static float timeElapsedInGameTicks = 0;
@@ -59,57 +58,15 @@ namespace GameOverNamespace
 
         public override void OnInitialize()
         {
-            float heartSize = 50;
-            float dustSize = 10;
             float numberOfDust = 6;
-            float brokenHeartWidth = 63;
-            float gameOverHeight = 212;
-            float gameOverWidth = 500;
-            float textWidth = 375;
-            float textHeight = 39;
-
             isVisible = false;
 
             gameOverScreen = new UIPanel();
-            gameOverScreen.Left.Set(-20, 0);
-            gameOverScreen.Top.Set(-20, 0);
-            gameOverScreen.BackgroundColor = Color.Black;
-            gameOverScreen.MinWidth.Set(Main.screenWidth + 500, 0);
-            gameOverScreen.MinHeight.Set(Main.screenHeight + 500, 0);
-
-
             brokenHeart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/HeartBroken"));
-            brokenHeart.Left.Set(centerX + (heartSize) - 3, 0);
-            brokenHeart.Top.Set(centerY + (heartSize), 0);
-            brokenHeart.Width.Set(brokenHeartWidth, 0);
-            brokenHeart.Height.Set(heartSize, 0);
-
             heart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/Heart"));
-            heart.Left.Set(centerX + (heartSize), 0);
-            heart.Top.Set(centerY + (heartSize), 0);
-            heart.Width.Set(heartSize, 0);
-            heart.Height.Set(heartSize, 0);
-
             gameOverText = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/GameOver"));
-            gameOverText.Left.Set(centerX - (gameOverWidth * 0.35f) + 10, 0);
-            gameOverText.Top.Set(centerY + (gameOverHeight / 2) - 300, 0);
-            gameOverText.Width.Set(gameOverWidth, 0);
-            gameOverText.Height.Set(gameOverHeight, 0);
-
             gameOverTextOverlay = new UIPanel();
-            gameOverTextOverlay.Left.Set(centerX - (gameOverWidth * 0.4f) - 40, 0);
-            gameOverTextOverlay.Top.Set(centerY + (gameOverHeight / 2) - 300 - 10, 0);
-            gameOverTextOverlay.Width.Set(gameOverWidth + 80, 0);
-            gameOverTextOverlay.Height.Set(gameOverHeight + 20, 0);
-            gameOverTextOverlay.BackgroundColor = Color.Black;
-            gameOverTextOverlay.BorderColor = Color.Black * 0.0f;
-
             text = new UIImage(getTextFrame());
-            text.Left.Set(centerX - (textWidth * 0.30f) + 10, 0);
-            text.Top.Set(centerY + (gameOverHeight / 2) + 200, 0);
-            text.Width.Set(textWidth, 0);
-            text.Height.Set(textHeight, 0);
-
 
             for (int i = 0; i < 13; i++)
             {
@@ -124,13 +81,73 @@ namespace GameOverNamespace
                 UIImage dust = new UIImage(getDustFrame());
                 dust.ScaleToFit = true;
                 dust.AllowResizingDimensions = true;
-                dust.MinWidth.Set(dustSize, 0);
-                dust.MinHeight.Set(dustSize, 0);
-                dust.MaxWidth.Set(dustSize, 0);
-                dust.MaxHeight.Set(dustSize, 0);
                 dusts[i] = new Dust(dust, -1);
-
             }
+
+            gameOverScreen.BackgroundColor = Color.Black;
+            gameOverScreen.Left.Set(-5, 0);
+            gameOverScreen.Top.Set(-5, 0);
+            gameOverScreen.MinWidth.Set(10, 1.0f);
+            gameOverScreen.MinHeight.Set(10, 1.0f);
+
+            float heartSize = 50;
+
+            heart.Left.Set(-(heartSize / 2f), 0.5f);
+            heart.Top.Set(-(heartSize / 2f), 0.5f);
+            heart.Width.Set(heartSize, 0);
+            heart.Height.Set(heartSize, 0);
+
+            float brokenHeartWidth = 63;
+            float brokenHeartHeight = heartSize;
+
+            brokenHeart.Left.Set(-(brokenHeartWidth / 2f), 0.5f);
+            brokenHeart.Top.Set(-(brokenHeartHeight / 2f), 0.5f);
+            brokenHeart.Width.Set(brokenHeartWidth, 0);
+            brokenHeart.Height.Set(brokenHeartHeight, 0);
+
+            float gameOverTextWidth = 500;
+            float gameOverTextHeight = 212;
+            float gameOverTextYOffset = -100;
+
+
+            float dustSize = 10;
+
+            for (int i = 0; i < dusts.Length - 1; i++)
+            {
+                dusts[i].dust.Left.Set(-(dustSize / 2f), 0.5f);
+                dusts[i].dust.Top.Set(-(dustSize / 2f), 0.5f);
+                dusts[i].dust.MinWidth.Set(dustSize, 0);
+                dusts[i].dust.MinHeight.Set(dustSize, 0);
+                dusts[i].dust.MaxWidth.Set(dustSize, 0);
+                dusts[i].dust.MaxHeight.Set(dustSize, 0);
+            }
+
+            gameOverText.Left.Set(-(gameOverTextWidth / 2f), 0.5f);
+            gameOverText.Top.Set(-(gameOverTextHeight / 2f) + gameOverTextYOffset, 0.5f);
+            gameOverText.Width.Set(gameOverTextWidth, 0);
+            gameOverText.Height.Set(gameOverTextHeight, 0);
+
+            float gameOverTextOverlayWidth = gameOverTextWidth + 20;
+            float gameOverTextOverlayHeight = gameOverTextHeight + 20;
+            float gameOverTextOverlayYOffset = gameOverTextYOffset;
+
+
+            gameOverTextOverlay.Left.Set(-(gameOverTextOverlayWidth / 2f), 0.5f);
+            gameOverTextOverlay.Top.Set(-(gameOverTextOverlayHeight / 2f) + gameOverTextOverlayYOffset, 0.5f);
+
+            gameOverTextOverlay.Width.Set(gameOverTextOverlayWidth, 0);
+            gameOverTextOverlay.Height.Set(gameOverTextOverlayHeight, 0);
+            gameOverTextOverlay.BackgroundColor = Color.Black;
+            gameOverTextOverlay.BorderColor = Color.Black * 0.0f;
+
+            float textWidth = 375;
+            float textHeight = 39;
+            float textYOffset = 100;
+
+            text.Left.Set(-(textWidth / 2f), 0.5f);
+            text.Top.Set(-(textHeight / 2f) + textYOffset, 0.5f);
+            text.Width.Set(textWidth, 0);
+            text.Height.Set(textHeight, 0);
 
             gameOverScreen.Append(gameOverText);
             gameOverScreen.Append(gameOverTextOverlay);
@@ -196,12 +213,61 @@ namespace GameOverNamespace
 
                     for (int i = 0; i < dusts.Length - 1; i++)
                     {
-                        dusts[i].dust.Left.Set(centerX + 75, 0);
-                        dusts[i].dust.Top.Set(centerY + 75, 0);
                         gameOverScreen.Append(dusts[i].dust);
                     }
 
                     Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break2"));
+                }
+                if (timeElapsedInGameTicks > 135)
+                {
+                    float intialSpeed = 9f;
+                    float gravity = 5f;
+
+                    // limits how far dusts fly horizontally
+                    float horizontalLimiter = 0.6f;
+                    float timeInSec = ((timeElapsedInGameTicks - 135) / 60) + 1;
+
+                    for (int i = 0; i < dusts.Length - 1; i++)
+                    {
+                        float angle = rand.Next(0, 360);
+                        if (i < (dusts.Length / 2))
+                        {
+                            // atleast half of the dusts should try to fly up because it looks cool
+                            angle = rand.Next(40, 140);
+                        }
+                        if (dusts[i].angle == -1)
+                        {
+                            dusts[i].angle = angle;
+                        }
+                        else
+                        {
+                            angle = dusts[i].angle;
+                        }
+
+                        double angleInRadians = angle * (Math.PI / 180.0);
+
+                        float y1 = intialSpeed * (float)Math.Sin(angleInRadians) * timeInSec;
+                        float y2 = gravity * (float)Math.Pow(timeInSec, 2f);
+                        float x = intialSpeed * (float)Math.Cos(angleInRadians) * timeInSec;
+                        float posX = dusts[i].dust.Left.Pixels;
+                        float posY = dusts[i].dust.Top.Pixels;
+                        dusts[i].dust.Left.Set((x * horizontalLimiter) + posX, 0.5f);
+                        dusts[i].dust.Top.Set(((y1 - y2) * -1) + posY, 0.5f);
+                    }
+
+                    // every 8 ticks increment the heart shard frame
+                    if ((timeElapsedInGameTicks) % 8 == 0)
+                    {
+                        currentFrame++;
+                        if (currentFrame >= 3)
+                        {
+                            currentFrame = 0;
+                        }
+                        for (int i = 0; i < dusts.Length - 1; i++)
+                        {
+                            dusts[i].dust.SetImage(getDustFrame());
+                        }
+                    }
                 }
 
 
@@ -229,65 +295,25 @@ namespace GameOverNamespace
                     }
                 }
 
-                // every 8 ticks increment the heart shard frame
-                if ((timeElapsedInGameTicks) % 8 == 0)
-                {
-                    currentFrame++;
-                    if (currentFrame >= 3)
-                    {
-                        currentFrame = 0;
-                    }
-                    for (int i = 0; i < dusts.Length - 1; i++)
-                    {
-                        dusts[i].dust.SetImage(getDustFrame());
-                    }
-                }
-
-                float intialSpeed = 4.3f;
-                float gravity = 1.3f;
-                float timeInSec = timeElapsedInGameTicks / 60;
-
-                for (int i = 0; i < dusts.Length - 1; i++)
-                {
-                    float angle = rand.Next(0, 360);
-                    if (i < (dusts.Length / 2))
-                    {
-                        // atleast half of the dusts should fly up
-                        angle = rand.Next(20, 130);
-                    }
-                    if (dusts[i].angle == -1)
-                    {
-                        dusts[i].angle = angle;
-                    }
-                    else
-                    {
-                        angle = dusts[i].angle;
-                    }
-
-                    double angleInRadians = angle * (Math.PI / 180.0);
-
-                    float y1 = intialSpeed * (float)Math.Sin(angleInRadians) * timeInSec;
-                    float y2 = gravity * (float)Math.Pow(timeInSec, 2f);
-                    float x = intialSpeed * (float)Math.Cos(angleInRadians) * timeInSec;
-                    float posX = dusts[i].dust.Left.Pixels;
-                    float posY = dusts[i].dust.Top.Pixels;
-                    dusts[i].dust.Left.Set((x) + posX, 0);
-                    dusts[i].dust.Top.Set(((y1 - y2) * -1) + posY, 0);
-                }
             }
             Recalculate();
         }
 
         public static void CleanUp()
         {
+            float dustSize = 10;
+
             if (isVisible)
             {
                 Main.musicVolume = musicVolume;
                 Main.ambientVolume = ambientVolume;
                 Main.soundVolume = soundVolume;
+                //Main.musicFade = musicFade;
             }
             for (int i = 0; i < dusts.Length - 1; i++)
             {
+                dusts[i].dust.Left.Set(-(dustSize / 2f), 0.5f);
+                dusts[i].dust.Top.Set(-(dustSize / 2f), 0.5f);
                 dusts[i].dust.Remove();
                 dusts[i].angle = -1;
             }
@@ -299,6 +325,8 @@ namespace GameOverNamespace
             currentFrame = 0;
             currentTextFrame = 0;
             text.Remove();
+            brokenHeart.Remove();
+            heart.Remove();
             text.SetImage(getTextFrame());
             gameOverScreen.Append(text);
             gameOverTextOverlay.BackgroundColor = Color.Black * 1;
@@ -306,8 +334,11 @@ namespace GameOverNamespace
 
         public static void EndGameOver()
         {
-            isRespawning = true;
-            timeElapsedInGameTicks = 0;
+            if (isVisible)
+            {
+                isRespawning = true;
+                timeElapsedInGameTicks = 0;
+            }
         }
 
         public static void ActivateGameOver()
