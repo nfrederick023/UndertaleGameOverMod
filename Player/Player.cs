@@ -13,13 +13,14 @@ namespace UndertaleDeathPlayer
             GameOverUI.ActivateGameOver();
         }
 
+        public override void Initialize()
+        {
+            GameOverUI.CleanUp();
+        }
+
         public override void OnRespawn(Player player)
         {
-            Task.Delay(3000).ContinueWith(_ =>
-        {
             GameOverUI.EndGameOver();
-
-        });
         }
     }
 }

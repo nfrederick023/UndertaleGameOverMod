@@ -24,53 +24,38 @@ namespace GameOverNamespace
         }
     }
 
-    public class GameOverText
-    {
-        public UIImage gameOverText;
-        public bool isVisible;
-
-        public GameOverText(UIImage newnewGameOverTextt, bool newIsVisible)
-        {
-            gameOverText = newnewGameOverTextt;
-            isVisible = newIsVisible;
-        }
-    }
-
     public class GameOverUI : UIState
     {
-        public static bool textIsVisible;
         public static bool isVisible;
-        public static bool isRestarting;
+        public static bool isMusicPlaying;
+        public static bool isRespawning;
         private static UIPanel gameOverScreen;
         private static UIPanel gameOverTextOverlay;
         private static UIImage text;
         private static UIImage heart;
-        private static GameOverText gameOverText;
+        private static UIImage gameOverText;
         private static UIImage brokenHeart;
 
         private static Dust[] dusts = new Dust[6];
 
         private static int currentTextFrame = 0;
+
+        private static int maxTextFrames = 13;
         private static int currentFrame = 0;
 
         private static float centerX = ((Main.screenWidth) / 2) + 10;
         private static float centerY = ((Main.screenHeight) / 2);
 
-        private static int frameTimer = 0;
-        private static int frameTime = 120;
+        private static Random rand = new Random();
 
-        private static int frameTimerText = 0;
-        private static int frameTimeText = 90;
-
-        private static float endTimer = 0;
-        private static float fadeTimer = 0;
-        private static float time = 0;
+        private static float timeElapsedInGameTicks = 0;
 
         private static float soundVolume;
         private static float ambientVolume;
         private static float musicVolume;
 
 
+        public static bool preplay = true;
 
         public override void OnInitialize()
         {
@@ -82,9 +67,9 @@ namespace GameOverNamespace
             float gameOverWidth = 500;
             float textWidth = 375;
             float textHeight = 39;
-            textIsVisible = false;
+
             isVisible = false;
-            isRestarting = false;
+
             gameOverScreen = new UIPanel();
             gameOverScreen.Left.Set(-20, 0);
             gameOverScreen.Top.Set(-20, 0);
@@ -105,12 +90,11 @@ namespace GameOverNamespace
             heart.Width.Set(heartSize, 0);
             heart.Height.Set(heartSize, 0);
 
-            UIImage gameOverTextImage = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/GameOver"));
-            gameOverTextImage.Left.Set(centerX - (gameOverWidth * 0.35f) + 10, 0);
-            gameOverTextImage.Top.Set(centerY + (gameOverHeight / 2) - 300, 0);
-            gameOverTextImage.Width.Set(gameOverWidth, 0);
-            gameOverTextImage.Height.Set(gameOverHeight, 0);
-            gameOverText = new GameOverText(gameOverTextImage, false);
+            gameOverText = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/GameOver"));
+            gameOverText.Left.Set(centerX - (gameOverWidth * 0.35f) + 10, 0);
+            gameOverText.Top.Set(centerY + (gameOverHeight / 2) - 300, 0);
+            gameOverText.Width.Set(gameOverWidth, 0);
+            gameOverText.Height.Set(gameOverHeight, 0);
 
             gameOverTextOverlay = new UIPanel();
             gameOverTextOverlay.Left.Set(centerX - (gameOverWidth * 0.4f) - 40, 0);
@@ -148,6 +132,10 @@ namespace GameOverNamespace
 
             }
 
+            gameOverScreen.Append(gameOverText);
+            gameOverScreen.Append(gameOverTextOverlay);
+            gameOverScreen.Append(text);
+
             Append(gameOverScreen); //appends the panel to the UIState
         }
 
@@ -164,79 +152,98 @@ namespace GameOverNamespace
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
-            Random rand = new Random();
+            timeElapsedInGameTicks++;
 
-            if (isRestarting)
+            if (isRespawning)
             {
-                float fadeOutTime = 2f;
+                float fadeDuration = 120;
                 currentTextFrame = 0;
                 text.SetImage(getTextFrame());
+                isMusicPlaying = false;
 
-                if ((endTimer / 60) <= fadeOutTime)
+                if (gameOverTextOverlay.BackgroundColor != Color.Black * 1)
                 {
-                    float percentage = (endTimer / 60) / fadeOutTime;
-                    float fadeSoundVolume = (1 - (percentage));
-                    gameOverTextOverlay.BackgroundColor = Color.Black * (percentage * 1.5f);
-                    if (fadeSoundVolume <= soundVolume)
-                    {
-                        Main.soundVolume = (fadeSoundVolume);
-                    }
-                    endTimer++;
-
+                    gameOverTextOverlay.BackgroundColor = Color.Black * (timeElapsedInGameTicks / fadeDuration);
                 }
                 else
                 {
-                    isVisible = false;
                     CleanUp();
                 }
             }
-
-            if (isVisible)
+            else
             {
-
-                time++;
-                float fadeInTimeSeconds = 0.5f;
-                float intialSpeed = 4.3f;
-                float gravity = 1.3f;
-                float timeInSec = (time / 60);
-
-                // increment the frame timer
-                frameTimer += (int)gameTime.ElapsedGameTime.TotalMilliseconds;
-
-                // if it's time to change frames, move to the next frame
-                if (frameTimer >= frameTime)
+                if (timeElapsedInGameTicks == 1)
                 {
-                    currentFrame++;
+                    ambientVolume = Main.ambientVolume;
+                    soundVolume = Main.soundVolume;
+                    musicVolume = Main.musicVolume;
+                    Main.ambientVolume = 0f;
+
+                    gameOverScreen.Append(heart);
+                }
+
+                if (timeElapsedInGameTicks == 60)
+                {
+                    heart.Remove();
+                    gameOverScreen.Append(brokenHeart);
+                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break1"));
+                }
+
+                if (timeElapsedInGameTicks == 135)
+                {
+                    brokenHeart.Remove();
+
                     for (int i = 0; i < dusts.Length - 1; i++)
                     {
-                        dusts[i].dust.SetImage(getDustFrame());
+                        dusts[i].dust.Left.Set(centerX + 75, 0);
+                        dusts[i].dust.Top.Set(centerY + 75, 0);
+                        gameOverScreen.Append(dusts[i].dust);
                     }
+
+                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break2"));
+                }
+
+
+                if (timeElapsedInGameTicks == 220)
+                {
+                    //isMusicPlaying = true;
+                }
+
+                if (timeElapsedInGameTicks >= 220)
+                {
+                    int fadeDuration = 60;
+                    float percentage = (1 - ((timeElapsedInGameTicks - 225) / fadeDuration));
+                    gameOverTextOverlay.BackgroundColor = Color.Black * percentage;
+                }
+
+                if (timeElapsedInGameTicks >= 360)
+                {
+                    // every 6 ticks if all the text frames haven't been shown, display the next one
+                    if ((timeElapsedInGameTicks - 360) % 5 == 0 && currentTextFrame < maxTextFrames)
+                    {
+                        currentTextFrame++;
+                        Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Asgore"));
+                        text.SetImage(getTextFrame());
+                    }
+                }
+
+                // every 8 ticks increment the heart shard frame
+                if ((timeElapsedInGameTicks) % 8 == 0)
+                {
+                    currentFrame++;
                     if (currentFrame >= 3)
                     {
                         currentFrame = 0;
                     }
-                    frameTimer = 0;
+                    for (int i = 0; i < dusts.Length - 1; i++)
+                    {
+                        dusts[i].dust.SetImage(getDustFrame());
+                    }
                 }
 
-                if (textIsVisible)
-                {
-                    frameTimerText += (int)gameTime.ElapsedGameTime.TotalMilliseconds;
-                }
-                if (textIsVisible && frameTimerText >= frameTimeText && currentTextFrame < 13 && !isRestarting)
-                {
-                    currentTextFrame++;
-                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Asgore"));
-
-                    text.SetImage(getTextFrame());
-                    frameTimerText = 0;
-                }
-
-                if (gameOverText.isVisible && (fadeTimer / 60) <= fadeInTimeSeconds)
-                {
-                    float percentage = (fadeTimer / 60) / fadeInTimeSeconds;
-                    gameOverTextOverlay.BackgroundColor = Color.Black * (1 - percentage);
-                    fadeTimer++;
-                }
+                float intialSpeed = 4.3f;
+                float gravity = 1.3f;
+                float timeInSec = timeElapsedInGameTicks / 60;
 
                 for (int i = 0; i < dusts.Length - 1; i++)
                 {
@@ -269,85 +276,42 @@ namespace GameOverNamespace
             Recalculate();
         }
 
-        public static void EndGameOver()
-        {
-            endTimer = 0;
-            isRestarting = true;
-        }
-
         public static void CleanUp()
         {
-            gameOverText.isVisible = false;
-            gameOverText.gameOverText.Remove();
-            gameOverTextOverlay.Remove();
-            text.Remove();
-            text.SetImage(getTextFrame());
-            Terraria.Audio.SoundEngine.StopTrackedSounds();
-
-
+            if (isVisible)
+            {
+                Main.musicVolume = musicVolume;
+                Main.ambientVolume = ambientVolume;
+                Main.soundVolume = soundVolume;
+            }
             for (int i = 0; i < dusts.Length - 1; i++)
             {
                 dusts[i].dust.Remove();
                 dusts[i].angle = -1;
             }
-            time = 0;
-            fadeTimer = 0;
+
+            isRespawning = false;
+            isVisible = false;
+            isMusicPlaying = false;
+            timeElapsedInGameTicks = 0;
+            currentFrame = 0;
             currentTextFrame = 0;
-            Main.musicVolume = musicVolume;
-            Main.ambientVolume = ambientVolume;
-            Main.soundVolume = soundVolume;
+            text.Remove();
+            text.SetImage(getTextFrame());
+            gameOverScreen.Append(text);
+            gameOverTextOverlay.BackgroundColor = Color.Black * 1;
+        }
+
+        public static void EndGameOver()
+        {
+            isRespawning = true;
+            timeElapsedInGameTicks = 0;
         }
 
         public static void ActivateGameOver()
         {
-            isRestarting = false;
-            textIsVisible = false;
-            musicVolume = Main.musicVolume;
-            ambientVolume = Main.ambientVolume;
-            soundVolume = Main.soundVolume;
-
-            centerX = ((Main.screenWidth) / 2) + 10;
-            centerY = ((Main.screenHeight) / 2);
-
-            Main.musicVolume = 0f;
-            Main.ambientVolume = 0f;
-
-            gameOverScreen.Append(heart);
-
             isVisible = true;
-            Task.Delay(1000).ContinueWith(_ =>
-            {
-                heart.Remove();
-                gameOverScreen.Append(brokenHeart);
-                Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break1"));
-            });
-
-            Task.Delay(2250).ContinueWith(_ =>
-             {
-                 brokenHeart.Remove();
-                 gameOverScreen.Append(gameOverText.gameOverText);
-                 gameOverScreen.Append(gameOverTextOverlay);
-                 gameOverScreen.Append(text);
-                 for (int i = 0; i < dusts.Length - 1; i++)
-                 {
-                     dusts[i].dust.Left.Set(centerX + 75, 0);
-                     dusts[i].dust.Top.Set(centerY + 75, 0);
-                     gameOverScreen.Append(dusts[i].dust);
-                 }
-
-                 Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break2"));
-             });
-
-            Task.Delay(3750).ContinueWith(_ =>
-            {
-                gameOverText.isVisible = true;
-                Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Death"));
-            });
-
-            Task.Delay(4000).ContinueWith(_ =>
-            {
-                textIsVisible = true;
-            });
+            timeElapsedInGameTicks = 0;
         }
     }
 }
