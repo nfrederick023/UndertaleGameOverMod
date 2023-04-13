@@ -38,13 +38,11 @@ namespace TerrariaUITutorial
             // it will only draw if the player is not on the main menu
             if (!Main.gameMenu && GameOverUI.isVisible && !Main.gamePaused)
             {
+                Terraria.Main.musicFade[Main.curMusic] = 1f;
+
                 gameoverInterface?.Update(gameTime);
             }
 
-            if (!Main.gameMenu && !Main.gamePaused)
-            {
-                //Terraria.Main.musicFade[Main.curMusic] = 0.5f;
-            }
         }
 
         public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers)

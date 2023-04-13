@@ -11,8 +11,8 @@ namespace SceneEffectNamespace
         public override int Music => MusicLoader.GetMusicSlot(Mod, "Sounds/Death");
         public override bool IsSceneEffectActive(Player player)
         {
-            return true;
+            return GameOverUI.isMusicPlaying;
         }
-
     }
+
 }

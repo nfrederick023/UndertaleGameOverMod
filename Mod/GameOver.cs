@@ -178,6 +178,7 @@ namespace GameOverNamespace
                     soundVolume = Main.soundVolume;
                     musicVolume = Main.musicVolume;
                     Main.ambientVolume = 0f;
+                    Main.musicVolume = 0;
 
                     gameOverScreen.Append(heart);
                 }
@@ -206,7 +207,8 @@ namespace GameOverNamespace
 
                 if (timeElapsedInGameTicks == 220)
                 {
-                    //isMusicPlaying = true;
+                    Main.musicVolume = musicVolume;
+                    isMusicPlaying = true;
                 }
 
                 if (timeElapsedInGameTicks >= 220)
@@ -219,7 +221,7 @@ namespace GameOverNamespace
                 if (timeElapsedInGameTicks >= 360)
                 {
                     // every 6 ticks if all the text frames haven't been shown, display the next one
-                    if ((timeElapsedInGameTicks - 360) % 5 == 0 && currentTextFrame < maxTextFrames)
+                    if ((timeElapsedInGameTicks - 360) % 6 == 0 && currentTextFrame < maxTextFrames)
                     {
                         currentTextFrame++;
                         Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Asgore"));
