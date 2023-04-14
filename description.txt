@@ -1,1 +1,11 @@
-Undertale Death Screen is a pretty cool mod, it does...this. Modify this file with a description of your mod.
+Undertale Gameover is which adds the Undertale Game Over screen to Terraria.  
+
+Concept created and promptly abandoned by Master Weller aka Adam Turquoise.   
+
+Reimagined and reprogrammed from the ground up by yours truly. 
+
+If you have a suggestion or found a bug, please message me on Discord: Mining#7477
+
+**If you are playing a mod which shortens the respawn timer (eg Calamity):**
+
+These is a toggle option in the config which shortens the game over screen.  

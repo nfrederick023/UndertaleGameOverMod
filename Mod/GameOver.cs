@@ -1,6 +1,6 @@
 
 using System;
-using System.Threading.Tasks;
+using ConfigOptionsNamespace;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
@@ -9,7 +9,7 @@ using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
 using Terraria.UI;
 
-namespace GameOverNamespace
+namespace GameOverUINamespace
 {
 
     public class Dust
@@ -17,10 +17,22 @@ namespace GameOverNamespace
         public UIImage dust;
         public float angle;
 
-        public Dust(UIImage newDust, float newAngle)
+        public Dust(UIImage dust, float angle)
         {
-            dust = newDust;
-            angle = newAngle;
+            this.dust = dust;
+            this.angle = angle;
+        }
+    }
+
+    public class AsgoreText
+    {
+        public string name;
+        public int frames;
+
+        public AsgoreText(string name, int frames)
+        {
+            this.name = name;
+            this.frames = frames;
         }
     }
 
@@ -30,7 +42,7 @@ namespace GameOverNamespace
         public static bool isMusicPlaying;
         public static bool isRespawning;
 
-        private static float[] musicFade;
+        public static bool hasFinished;
         private static UIPanel gameOverScreen;
         private static UIPanel gameOverTextOverlay;
         private static UIImage text;
@@ -53,8 +65,11 @@ namespace GameOverNamespace
         private static float ambientVolume;
         private static float musicVolume;
 
+        public static string currentTextName = "dontlosehope";
 
         public static bool preplay = true;
+
+        private static AsgoreText[] asgoreTexts = new AsgoreText[6];
 
         public override void OnInitialize()
         {
@@ -62,17 +77,11 @@ namespace GameOverNamespace
             isVisible = false;
 
             gameOverScreen = new UIPanel();
-            brokenHeart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/HeartBroken"));
-            heart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/Heart"));
-            gameOverText = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/GameOver"));
+            brokenHeart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/HeartBroken"));
+            heart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/Heart"));
+            gameOverText = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/GameOver"));
             gameOverTextOverlay = new UIPanel();
             text = new UIImage(getTextFrame());
-
-            for (int i = 0; i < 13; i++)
-            {
-                currentTextFrame++;
-                getTextFrame();
-            }
 
             currentTextFrame = 0;
 
@@ -107,7 +116,7 @@ namespace GameOverNamespace
 
             float gameOverTextWidth = 500;
             float gameOverTextHeight = 212;
-            float gameOverTextYOffset = -100;
+            float gameOverTextYOffset = -150;
 
 
             float dustSize = 10;
@@ -141,8 +150,8 @@ namespace GameOverNamespace
             gameOverTextOverlay.BorderColor = Color.Black * 0.0f;
 
             float textWidth = 375;
-            float textHeight = 39;
-            float textYOffset = 100;
+            float textHeight = 90;
+            float textYOffset = 150;
 
             text.Left.Set(-(textWidth / 2f), 0.5f);
             text.Top.Set(-(textHeight / 2f) + textYOffset, 0.5f);
@@ -154,30 +163,74 @@ namespace GameOverNamespace
             gameOverScreen.Append(text);
 
             Append(gameOverScreen); //appends the panel to the UIState
+
+            asgoreTexts[0] = new AsgoreText("dontlosehope", 14);
+            asgoreTexts[1] = new AsgoreText("cannotgiveup", 25);
+            asgoreTexts[2] = new AsgoreText("ourfate", 22);
+            asgoreTexts[3] = new AsgoreText("cantquit", 28);
+            asgoreTexts[4] = new AsgoreText("alright", 23);
+            asgoreTexts[5] = new AsgoreText("dunkedon", 22);
+
+            // load all the image frames so they don't flash when loaded in game
+            for (int i = 0; i < asgoreTexts.Length; i++)
+            {
+                currentTextName = asgoreTexts[i].name;
+                for (int j = 0; j <= asgoreTexts[i].frames; j++)
+                {
+                    currentTextFrame = j;
+                    getTextFrame();
+                }
+            }
+
+            currentTextFrame = 0;
+
         }
 
         public static Asset<Texture2D> getDustFrame()
         {
-            return ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/Dust{currentFrame}");
+            return ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/Dust{currentFrame}");
         }
 
         public static Asset<Texture2D> getTextFrame()
         {
-            return ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/dontlosehope/txt{currentTextFrame}");
+            return ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/{currentTextName}/{currentTextFrame}");
         }
 
+        public static void setRandomText()
+        {
+
+            int numberOfTexts = asgoreTexts.Length - 1;
+            int selectedText = rand.Next(0, numberOfTexts);
+
+            currentTextName = asgoreTexts[selectedText].name;
+            maxTextFrames = asgoreTexts[selectedText].frames;
+
+            //if certain skeletons kill the player, run a 5% chance to get dunked on 
+            if (NPC.CountNPCS(35) > 0 || NPC.CountNPCS(127) > 0 || NPC.CountNPCS(21) > 0 || NPC.CountNPCS(77) > 0 || NPC.CountNPCS(292) > 0)
+            {
+                int rollForDunkedOn = rand.Next(0, 20);
+                if (rollForDunkedOn == 0)
+                {
+                    currentTextName = asgoreTexts[5].name;
+                    maxTextFrames = asgoreTexts[5].frames;
+                }
+            }
+        }
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
             timeElapsedInGameTicks++;
 
-            if (isRespawning)
+            if (isRespawning && hasFinished)
             {
                 float fadeDuration = 120;
-                currentTextFrame = 0;
-                text.SetImage(getTextFrame());
-                isMusicPlaying = false;
-
+                if (currentTextFrame > 0)
+                {
+                    currentTextFrame = 0;
+                    text.SetImage(getTextFrame());
+                    isMusicPlaying = false;
+                    timeElapsedInGameTicks = 0;
+                }
                 if (gameOverTextOverlay.BackgroundColor != Color.Black * 1)
                 {
                     gameOverTextOverlay.BackgroundColor = Color.Black * (timeElapsedInGameTicks / fadeDuration);
@@ -204,7 +257,7 @@ namespace GameOverNamespace
                 {
                     heart.Remove();
                     gameOverScreen.Append(brokenHeart);
-                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break1"));
+                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleGameOver)}/Sounds/Break1"));
                 }
 
                 if (timeElapsedInGameTicks == 135)
@@ -216,7 +269,7 @@ namespace GameOverNamespace
                         gameOverScreen.Append(dusts[i].dust);
                     }
 
-                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break2"));
+                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleGameOver)}/Sounds/Break2"));
                 }
                 if (timeElapsedInGameTicks > 135)
                 {
@@ -270,28 +323,55 @@ namespace GameOverNamespace
                     }
                 }
 
-
-                if (timeElapsedInGameTicks == 220)
+                if (!ModContent.GetInstance<ConfigOptions>().isShorterRespawn)
                 {
-                    Main.musicVolume = musicVolume;
-                    isMusicPlaying = true;
-                }
 
-                if (timeElapsedInGameTicks >= 220)
-                {
-                    int fadeDuration = 60;
-                    float percentage = (1 - ((timeElapsedInGameTicks - 225) / fadeDuration));
-                    gameOverTextOverlay.BackgroundColor = Color.Black * percentage;
-                }
-
-                if (timeElapsedInGameTicks >= 360)
-                {
-                    // every 6 ticks if all the text frames haven't been shown, display the next one
-                    if ((timeElapsedInGameTicks - 360) % 6 == 0 && currentTextFrame < maxTextFrames)
+                    if (timeElapsedInGameTicks == 220)
                     {
-                        currentTextFrame++;
-                        Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Asgore"));
-                        text.SetImage(getTextFrame());
+                        Main.musicVolume = musicVolume;
+                        isMusicPlaying = true;
+                    }
+
+                    if (timeElapsedInGameTicks >= 220)
+                    {
+                        int fadeDuration = 60;
+                        float percentage = (1 - ((timeElapsedInGameTicks - 225) / fadeDuration));
+                        gameOverTextOverlay.BackgroundColor = Color.Black * percentage;
+                    }
+
+                    if (timeElapsedInGameTicks >= 360)
+                    {
+                        int newFrameEveryTick = 5;
+                        // every 6 ticks if all the text frames haven't been shown, display the next one
+                        if (timeElapsedInGameTicks % newFrameEveryTick == 0 && currentTextFrame < maxTextFrames)
+                        {
+                            currentTextFrame++;
+                            text.SetImage(getTextFrame());
+                        }
+
+                        if (timeElapsedInGameTicks % 5 == 0 && currentTextFrame < maxTextFrames)
+                        {
+                            if (currentTextName == "dunkedon")
+                            {
+                                Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleGameOver)}/Sounds/Sans"));
+                            }
+                            else
+                            {
+                                Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleGameOver)}/Sounds/Asgore"));
+                            }
+                        }
+
+                        if ((timeElapsedInGameTicks - 360) > ((maxTextFrames + 1) * newFrameEveryTick) + 120)
+                        {
+                            hasFinished = true;
+                        }
+                    }
+                }
+                else
+                {
+                    if (timeElapsedInGameTicks == 220)
+                    {
+                        hasFinished = true;
                     }
                 }
 
@@ -308,7 +388,6 @@ namespace GameOverNamespace
                 Main.musicVolume = musicVolume;
                 Main.ambientVolume = ambientVolume;
                 Main.soundVolume = soundVolume;
-                //Main.musicFade = musicFade;
             }
             for (int i = 0; i < dusts.Length - 1; i++)
             {
@@ -337,13 +416,14 @@ namespace GameOverNamespace
             if (isVisible)
             {
                 isRespawning = true;
-                timeElapsedInGameTicks = 0;
             }
         }
 
         public static void ActivateGameOver()
         {
+            setRandomText();
             isVisible = true;
+            hasFinished = false;
             timeElapsedInGameTicks = 0;
         }
     }
