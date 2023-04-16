@@ -1,6 +1,6 @@
 
 using System;
-using System.Threading.Tasks;
+using ConfigOptionsNamespace;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
@@ -9,7 +9,7 @@ using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
 using Terraria.UI;
 
-namespace GameOverNamespace
+namespace GameOverUINamespace
 {
 
     public class Dust
@@ -17,121 +17,71 @@ namespace GameOverNamespace
         public UIImage dust;
         public float angle;
 
-        public Dust(UIImage newDust, float newAngle)
+        public Dust(UIImage dust, float angle)
         {
-            dust = newDust;
-            angle = newAngle;
+            this.dust = dust;
+            this.angle = angle;
         }
     }
 
-    public class GameOverText
+    public class AsgoreText
     {
-        public UIImage gameOverText;
-        public bool isVisible;
+        public string name;
+        public int frames;
 
-        public GameOverText(UIImage newnewGameOverTextt, bool newIsVisible)
+        public AsgoreText(string name, int frames)
         {
-            gameOverText = newnewGameOverTextt;
-            isVisible = newIsVisible;
+            this.name = name;
+            this.frames = frames;
         }
     }
 
     public class GameOverUI : UIState
     {
-        public static bool textIsVisible;
         public static bool isVisible;
-        public static bool isRestarting;
+        public static bool isMusicPlaying;
+        public static bool isRespawning;
+
+        public static bool hasFinished;
         private static UIPanel gameOverScreen;
         private static UIPanel gameOverTextOverlay;
         private static UIImage text;
         private static UIImage heart;
-        private static GameOverText gameOverText;
+        private static UIImage gameOverText;
         private static UIImage brokenHeart;
 
         private static Dust[] dusts = new Dust[6];
 
         private static int currentTextFrame = 0;
+
+        private static int maxTextFrames = 13;
         private static int currentFrame = 0;
 
-        private static float centerX = ((Main.screenWidth) / 2) + 10;
-        private static float centerY = ((Main.screenHeight) / 2);
+        private static Random rand = new Random();
 
-        private static int frameTimer = 0;
-        private static int frameTime = 120;
-
-        private static int frameTimerText = 0;
-        private static int frameTimeText = 90;
-
-        private static float endTimer = 0;
-        private static float fadeTimer = 0;
-        private static float time = 0;
+        private static float timeElapsedInGameTicks = 0;
 
         private static float soundVolume;
         private static float ambientVolume;
         private static float musicVolume;
 
+        public static string currentTextName = "dontlosehope";
 
+        public static bool preplay = true;
+
+        private static AsgoreText[] asgoreTexts = new AsgoreText[6];
 
         public override void OnInitialize()
         {
-            float heartSize = 50;
-            float dustSize = 10;
             float numberOfDust = 6;
-            float brokenHeartWidth = 63;
-            float gameOverHeight = 212;
-            float gameOverWidth = 500;
-            float textWidth = 375;
-            float textHeight = 39;
-            textIsVisible = false;
             isVisible = false;
-            isRestarting = false;
+
             gameOverScreen = new UIPanel();
-            gameOverScreen.Left.Set(-20, 0);
-            gameOverScreen.Top.Set(-20, 0);
-            gameOverScreen.BackgroundColor = Color.Black;
-            gameOverScreen.MinWidth.Set(Main.screenWidth + 500, 0);
-            gameOverScreen.MinHeight.Set(Main.screenHeight + 500, 0);
-
-
-            brokenHeart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/HeartBroken"));
-            brokenHeart.Left.Set(centerX + (heartSize) - 3, 0);
-            brokenHeart.Top.Set(centerY + (heartSize), 0);
-            brokenHeart.Width.Set(brokenHeartWidth, 0);
-            brokenHeart.Height.Set(heartSize, 0);
-
-            heart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/Heart"));
-            heart.Left.Set(centerX + (heartSize), 0);
-            heart.Top.Set(centerY + (heartSize), 0);
-            heart.Width.Set(heartSize, 0);
-            heart.Height.Set(heartSize, 0);
-
-            UIImage gameOverTextImage = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/GameOver"));
-            gameOverTextImage.Left.Set(centerX - (gameOverWidth * 0.35f) + 10, 0);
-            gameOverTextImage.Top.Set(centerY + (gameOverHeight / 2) - 300, 0);
-            gameOverTextImage.Width.Set(gameOverWidth, 0);
-            gameOverTextImage.Height.Set(gameOverHeight, 0);
-            gameOverText = new GameOverText(gameOverTextImage, false);
-
+            brokenHeart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/HeartBroken"));
+            heart = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/Heart"));
+            gameOverText = new UIImage(ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/GameOver"));
             gameOverTextOverlay = new UIPanel();
-            gameOverTextOverlay.Left.Set(centerX - (gameOverWidth * 0.4f) - 40, 0);
-            gameOverTextOverlay.Top.Set(centerY + (gameOverHeight / 2) - 300 - 10, 0);
-            gameOverTextOverlay.Width.Set(gameOverWidth + 80, 0);
-            gameOverTextOverlay.Height.Set(gameOverHeight + 20, 0);
-            gameOverTextOverlay.BackgroundColor = Color.Black;
-            gameOverTextOverlay.BorderColor = Color.Black * 0.0f;
-
             text = new UIImage(getTextFrame());
-            text.Left.Set(centerX - (textWidth * 0.30f) + 10, 0);
-            text.Top.Set(centerY + (gameOverHeight / 2) + 200, 0);
-            text.Width.Set(textWidth, 0);
-            text.Height.Set(textHeight, 0);
-
-
-            for (int i = 0; i < 13; i++)
-            {
-                currentTextFrame++;
-                getTextFrame();
-            }
 
             currentTextFrame = 0;
 
@@ -140,214 +90,341 @@ namespace GameOverNamespace
                 UIImage dust = new UIImage(getDustFrame());
                 dust.ScaleToFit = true;
                 dust.AllowResizingDimensions = true;
-                dust.MinWidth.Set(dustSize, 0);
-                dust.MinHeight.Set(dustSize, 0);
-                dust.MaxWidth.Set(dustSize, 0);
-                dust.MaxHeight.Set(dustSize, 0);
                 dusts[i] = new Dust(dust, -1);
-
             }
 
+            gameOverScreen.BackgroundColor = Color.Black;
+            gameOverScreen.Left.Set(-5, 0);
+            gameOverScreen.Top.Set(-5, 0);
+            gameOverScreen.MinWidth.Set(10, 1.0f);
+            gameOverScreen.MinHeight.Set(10, 1.0f);
+
+            float heartSize = 50;
+
+            heart.Left.Set(-(heartSize / 2f), 0.5f);
+            heart.Top.Set(-(heartSize / 2f), 0.5f);
+            heart.Width.Set(heartSize, 0);
+            heart.Height.Set(heartSize, 0);
+
+            float brokenHeartWidth = 63;
+            float brokenHeartHeight = heartSize;
+
+            brokenHeart.Left.Set(-(brokenHeartWidth / 2f), 0.5f);
+            brokenHeart.Top.Set(-(brokenHeartHeight / 2f), 0.5f);
+            brokenHeart.Width.Set(brokenHeartWidth, 0);
+            brokenHeart.Height.Set(brokenHeartHeight, 0);
+
+            float gameOverTextWidth = 500;
+            float gameOverTextHeight = 212;
+            float gameOverTextYOffset = -150;
+
+
+            float dustSize = 10;
+
+            for (int i = 0; i < dusts.Length - 1; i++)
+            {
+                dusts[i].dust.Left.Set(-(dustSize / 2f), 0.5f);
+                dusts[i].dust.Top.Set(-(dustSize / 2f), 0.5f);
+                dusts[i].dust.MinWidth.Set(dustSize, 0);
+                dusts[i].dust.MinHeight.Set(dustSize, 0);
+                dusts[i].dust.MaxWidth.Set(dustSize, 0);
+                dusts[i].dust.MaxHeight.Set(dustSize, 0);
+            }
+
+            gameOverText.Left.Set(-(gameOverTextWidth / 2f), 0.5f);
+            gameOverText.Top.Set(-(gameOverTextHeight / 2f) + gameOverTextYOffset, 0.5f);
+            gameOverText.Width.Set(gameOverTextWidth, 0);
+            gameOverText.Height.Set(gameOverTextHeight, 0);
+
+            float gameOverTextOverlayWidth = gameOverTextWidth + 20;
+            float gameOverTextOverlayHeight = gameOverTextHeight + 20;
+            float gameOverTextOverlayYOffset = gameOverTextYOffset;
+
+
+            gameOverTextOverlay.Left.Set(-(gameOverTextOverlayWidth / 2f), 0.5f);
+            gameOverTextOverlay.Top.Set(-(gameOverTextOverlayHeight / 2f) + gameOverTextOverlayYOffset, 0.5f);
+
+            gameOverTextOverlay.Width.Set(gameOverTextOverlayWidth, 0);
+            gameOverTextOverlay.Height.Set(gameOverTextOverlayHeight, 0);
+            gameOverTextOverlay.BackgroundColor = Color.Black;
+            gameOverTextOverlay.BorderColor = Color.Black * 0.0f;
+
+            float textWidth = 375;
+            float textHeight = 90;
+            float textYOffset = 150;
+
+            text.Left.Set(-(textWidth / 2f), 0.5f);
+            text.Top.Set(-(textHeight / 2f) + textYOffset, 0.5f);
+            text.Width.Set(textWidth, 0);
+            text.Height.Set(textHeight, 0);
+
+            gameOverScreen.Append(gameOverText);
+            gameOverScreen.Append(gameOverTextOverlay);
+            gameOverScreen.Append(text);
+
             Append(gameOverScreen); //appends the panel to the UIState
+
+            asgoreTexts[0] = new AsgoreText("dontlosehope", 14);
+            asgoreTexts[1] = new AsgoreText("cannotgiveup", 25);
+            asgoreTexts[2] = new AsgoreText("ourfate", 22);
+            asgoreTexts[3] = new AsgoreText("cantquit", 28);
+            asgoreTexts[4] = new AsgoreText("alright", 23);
+            asgoreTexts[5] = new AsgoreText("dunkedon", 22);
+
+            // load all the image frames so they don't flash when loaded in game
+            for (int i = 0; i < asgoreTexts.Length; i++)
+            {
+                currentTextName = asgoreTexts[i].name;
+                for (int j = 0; j <= asgoreTexts[i].frames; j++)
+                {
+                    currentTextFrame = j;
+                    getTextFrame();
+                }
+            }
+
+            currentTextFrame = 0;
+
         }
 
         public static Asset<Texture2D> getDustFrame()
         {
-            return ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/Dust{currentFrame}");
+            return ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/Dust{currentFrame}");
         }
 
         public static Asset<Texture2D> getTextFrame()
         {
-            return ModContent.Request<Texture2D>($"{nameof(UndertaleDeath)}/Img/dontlosehope/txt{currentTextFrame}");
+            return ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/{currentTextName}/{currentTextFrame}");
         }
 
+        public static void setRandomText()
+        {
+
+            int numberOfTexts = asgoreTexts.Length - 1;
+            int selectedText = rand.Next(0, numberOfTexts);
+
+            currentTextName = asgoreTexts[selectedText].name;
+            maxTextFrames = asgoreTexts[selectedText].frames;
+
+            //if certain skeletons kill the player, run a 5% chance to get dunked on 
+            if (NPC.CountNPCS(35) > 0 || NPC.CountNPCS(127) > 0 || NPC.CountNPCS(21) > 0 || NPC.CountNPCS(77) > 0 || NPC.CountNPCS(292) > 0)
+            {
+                int rollForDunkedOn = rand.Next(0, 20);
+                if (rollForDunkedOn == 0)
+                {
+                    currentTextName = asgoreTexts[5].name;
+                    maxTextFrames = asgoreTexts[5].frames;
+                }
+            }
+        }
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
-            Random rand = new Random();
+            timeElapsedInGameTicks++;
 
-            if (isRestarting)
+            if (isRespawning && hasFinished)
             {
-                float fadeOutTime = 2f;
-                currentTextFrame = 0;
-                text.SetImage(getTextFrame());
-
-                if ((endTimer / 60) <= fadeOutTime)
+                float fadeDuration = 120;
+                if (currentTextFrame > 0)
                 {
-                    float percentage = (endTimer / 60) / fadeOutTime;
-                    float fadeSoundVolume = (1 - (percentage));
-                    gameOverTextOverlay.BackgroundColor = Color.Black * (percentage * 1.5f);
-                    if (fadeSoundVolume <= soundVolume)
-                    {
-                        Main.soundVolume = (fadeSoundVolume);
-                    }
-                    endTimer++;
-
+                    currentTextFrame = 0;
+                    text.SetImage(getTextFrame());
+                    isMusicPlaying = false;
+                    timeElapsedInGameTicks = 0;
+                }
+                if (gameOverTextOverlay.BackgroundColor != Color.Black * 1)
+                {
+                    gameOverTextOverlay.BackgroundColor = Color.Black * (timeElapsedInGameTicks / fadeDuration);
                 }
                 else
                 {
-                    isVisible = false;
                     CleanUp();
                 }
             }
-
-            if (isVisible)
+            else
             {
-
-                time++;
-                float fadeInTimeSeconds = 0.5f;
-                float intialSpeed = 4.3f;
-                float gravity = 1.3f;
-                float timeInSec = (time / 60);
-
-                // increment the frame timer
-                frameTimer += (int)gameTime.ElapsedGameTime.TotalMilliseconds;
-
-                // if it's time to change frames, move to the next frame
-                if (frameTimer >= frameTime)
+                if (timeElapsedInGameTicks == 1)
                 {
-                    currentFrame++;
+                    ambientVolume = Main.ambientVolume;
+                    soundVolume = Main.soundVolume;
+                    musicVolume = Main.musicVolume;
+                    Main.ambientVolume = 0f;
+                    Main.musicVolume = 0;
+
+                    gameOverScreen.Append(heart);
+                }
+
+                if (timeElapsedInGameTicks == 60)
+                {
+                    heart.Remove();
+                    gameOverScreen.Append(brokenHeart);
+                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleGameOver)}/Sounds/Break1"));
+                }
+
+                if (timeElapsedInGameTicks == 135)
+                {
+                    brokenHeart.Remove();
+
                     for (int i = 0; i < dusts.Length - 1; i++)
                     {
-                        dusts[i].dust.SetImage(getDustFrame());
+                        gameOverScreen.Append(dusts[i].dust);
                     }
-                    if (currentFrame >= 3)
-                    {
-                        currentFrame = 0;
-                    }
-                    frameTimer = 0;
-                }
 
-                if (textIsVisible)
+                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleGameOver)}/Sounds/Break2"));
+                }
+                if (timeElapsedInGameTicks > 135)
                 {
-                    frameTimerText += (int)gameTime.ElapsedGameTime.TotalMilliseconds;
-                }
-                if (textIsVisible && frameTimerText >= frameTimeText && currentTextFrame < 13 && !isRestarting)
-                {
-                    currentTextFrame++;
-                    Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Asgore"));
+                    float intialSpeed = 9f;
+                    float gravity = 5f;
 
-                    text.SetImage(getTextFrame());
-                    frameTimerText = 0;
-                }
+                    // limits how far dusts fly horizontally
+                    float horizontalLimiter = 0.6f;
+                    float timeInSec = ((timeElapsedInGameTicks - 135) / 60) + 1;
 
-                if (gameOverText.isVisible && (fadeTimer / 60) <= fadeInTimeSeconds)
-                {
-                    float percentage = (fadeTimer / 60) / fadeInTimeSeconds;
-                    gameOverTextOverlay.BackgroundColor = Color.Black * (1 - percentage);
-                    fadeTimer++;
-                }
-
-                for (int i = 0; i < dusts.Length - 1; i++)
-                {
-                    float angle = rand.Next(0, 360);
-                    if (i < (dusts.Length / 2))
+                    for (int i = 0; i < dusts.Length - 1; i++)
                     {
-                        // atleast half of the dusts should fly up
-                        angle = rand.Next(20, 130);
-                    }
-                    if (dusts[i].angle == -1)
-                    {
-                        dusts[i].angle = angle;
-                    }
-                    else
-                    {
-                        angle = dusts[i].angle;
+                        float angle = rand.Next(0, 360);
+                        if (i < (dusts.Length / 2))
+                        {
+                            // atleast half of the dusts should try to fly up because it looks cool
+                            angle = rand.Next(40, 140);
+                        }
+                        if (dusts[i].angle == -1)
+                        {
+                            dusts[i].angle = angle;
+                        }
+                        else
+                        {
+                            angle = dusts[i].angle;
+                        }
+
+                        double angleInRadians = angle * (Math.PI / 180.0);
+
+                        float y1 = intialSpeed * (float)Math.Sin(angleInRadians) * timeInSec;
+                        float y2 = gravity * (float)Math.Pow(timeInSec, 2f);
+                        float x = intialSpeed * (float)Math.Cos(angleInRadians) * timeInSec;
+                        float posX = dusts[i].dust.Left.Pixels;
+                        float posY = dusts[i].dust.Top.Pixels;
+                        dusts[i].dust.Left.Set((x * horizontalLimiter) + posX, 0.5f);
+                        dusts[i].dust.Top.Set(((y1 - y2) * -1) + posY, 0.5f);
                     }
 
-                    double angleInRadians = angle * (Math.PI / 180.0);
-
-                    float y1 = intialSpeed * (float)Math.Sin(angleInRadians) * timeInSec;
-                    float y2 = gravity * (float)Math.Pow(timeInSec, 2f);
-                    float x = intialSpeed * (float)Math.Cos(angleInRadians) * timeInSec;
-                    float posX = dusts[i].dust.Left.Pixels;
-                    float posY = dusts[i].dust.Top.Pixels;
-                    dusts[i].dust.Left.Set((x) + posX, 0);
-                    dusts[i].dust.Top.Set(((y1 - y2) * -1) + posY, 0);
+                    // every 8 ticks increment the heart shard frame
+                    if ((timeElapsedInGameTicks) % 8 == 0)
+                    {
+                        currentFrame++;
+                        if (currentFrame >= 3)
+                        {
+                            currentFrame = 0;
+                        }
+                        for (int i = 0; i < dusts.Length - 1; i++)
+                        {
+                            dusts[i].dust.SetImage(getDustFrame());
+                        }
+                    }
                 }
+
+                if (!ModContent.GetInstance<ConfigOptions>().isShorterRespawn)
+                {
+
+                    if (timeElapsedInGameTicks == 220)
+                    {
+                        Main.musicVolume = musicVolume;
+                        isMusicPlaying = true;
+                    }
+
+                    if (timeElapsedInGameTicks >= 220)
+                    {
+                        int fadeDuration = 60;
+                        float percentage = (1 - ((timeElapsedInGameTicks - 225) / fadeDuration));
+                        gameOverTextOverlay.BackgroundColor = Color.Black * percentage;
+                    }
+
+                    if (timeElapsedInGameTicks >= 360)
+                    {
+                        int newFrameEveryTick = 5;
+                        // every 6 ticks if all the text frames haven't been shown, display the next one
+                        if (timeElapsedInGameTicks % newFrameEveryTick == 0 && currentTextFrame < maxTextFrames)
+                        {
+                            currentTextFrame++;
+                            text.SetImage(getTextFrame());
+                        }
+
+                        if (timeElapsedInGameTicks % 5 == 0 && currentTextFrame < maxTextFrames)
+                        {
+                            if (currentTextName == "dunkedon")
+                            {
+                                Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleGameOver)}/Sounds/Sans"));
+                            }
+                            else
+                            {
+                                Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleGameOver)}/Sounds/Asgore"));
+                            }
+                        }
+
+                        if ((timeElapsedInGameTicks - 360) > ((maxTextFrames + 1) * newFrameEveryTick) + 120)
+                        {
+                            hasFinished = true;
+                        }
+                    }
+                }
+                else
+                {
+                    if (timeElapsedInGameTicks == 220)
+                    {
+                        hasFinished = true;
+                    }
+                }
+
             }
             Recalculate();
         }
 
-        public static void EndGameOver()
-        {
-            endTimer = 0;
-            isRestarting = true;
-        }
-
         public static void CleanUp()
         {
-            gameOverText.isVisible = false;
-            gameOverText.gameOverText.Remove();
-            gameOverTextOverlay.Remove();
-            text.Remove();
-            text.SetImage(getTextFrame());
-            Terraria.Audio.SoundEngine.StopTrackedSounds();
+            float dustSize = 10;
 
-
+            if (isVisible)
+            {
+                Main.musicVolume = musicVolume;
+                Main.ambientVolume = ambientVolume;
+                Main.soundVolume = soundVolume;
+            }
             for (int i = 0; i < dusts.Length - 1; i++)
             {
+                dusts[i].dust.Left.Set(-(dustSize / 2f), 0.5f);
+                dusts[i].dust.Top.Set(-(dustSize / 2f), 0.5f);
                 dusts[i].dust.Remove();
                 dusts[i].angle = -1;
             }
-            time = 0;
-            fadeTimer = 0;
+
+            isRespawning = false;
+            isVisible = false;
+            isMusicPlaying = false;
+            timeElapsedInGameTicks = 0;
+            currentFrame = 0;
             currentTextFrame = 0;
-            Main.musicVolume = musicVolume;
-            Main.ambientVolume = ambientVolume;
-            Main.soundVolume = soundVolume;
+            text.Remove();
+            brokenHeart.Remove();
+            heart.Remove();
+            text.SetImage(getTextFrame());
+            gameOverScreen.Append(text);
+            gameOverTextOverlay.BackgroundColor = Color.Black * 1;
+        }
+
+        public static void EndGameOver()
+        {
+            if (isVisible)
+            {
+                isRespawning = true;
+            }
         }
 
         public static void ActivateGameOver()
         {
-            isRestarting = false;
-            textIsVisible = false;
-            musicVolume = Main.musicVolume;
-            ambientVolume = Main.ambientVolume;
-            soundVolume = Main.soundVolume;
-
-            centerX = ((Main.screenWidth) / 2) + 10;
-            centerY = ((Main.screenHeight) / 2);
-
-            Main.musicVolume = 0f;
-            Main.ambientVolume = 0f;
-
-            gameOverScreen.Append(heart);
-
+            setRandomText();
             isVisible = true;
-            Task.Delay(1000).ContinueWith(_ =>
-            {
-                heart.Remove();
-                gameOverScreen.Append(brokenHeart);
-                Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break1"));
-            });
-
-            Task.Delay(2250).ContinueWith(_ =>
-             {
-                 brokenHeart.Remove();
-                 gameOverScreen.Append(gameOverText.gameOverText);
-                 gameOverScreen.Append(gameOverTextOverlay);
-                 gameOverScreen.Append(text);
-                 for (int i = 0; i < dusts.Length - 1; i++)
-                 {
-                     dusts[i].dust.Left.Set(centerX + 75, 0);
-                     dusts[i].dust.Top.Set(centerY + 75, 0);
-                     gameOverScreen.Append(dusts[i].dust);
-                 }
-
-                 Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Break2"));
-             });
-
-            Task.Delay(3750).ContinueWith(_ =>
-            {
-                gameOverText.isVisible = true;
-                Terraria.Audio.SoundEngine.PlaySound(new Terraria.Audio.SoundStyle($"{nameof(UndertaleDeath)}/Sounds/Death"));
-            });
-
-            Task.Delay(4000).ContinueWith(_ =>
-            {
-                textIsVisible = true;
-            });
+            hasFinished = false;
+            timeElapsedInGameTicks = 0;
         }
     }
 }
