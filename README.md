@@ -13,5 +13,5 @@ There is a toggle in the config to support shorter respawn times. This limits th
 
 Credits: 
 
-Mod by: Noah Frederick (nfrederick023) aka Mining
+Mod by: Noah Frederick (nfrederick023) aka Mining  
 Original concept (Undertale Death Screen) by Master Weller (aka Adam Turquoise). 
