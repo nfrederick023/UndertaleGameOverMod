@@ -1,17 +1,11 @@
-**Undertale Gameover** adds the Undertale Gameover screen to Terraria, On death, your SOUL shatters and Asgore will inspire you to stay determined! Works with Multiplayer!
+Adds the "Undertale" Gameover to Terraria.
 
-BONUS: There is a small chance to get a special gameover animation, inspired by a font-named character, when you are killed by certain enemies! DM me for hints!    
+On death, your SOUL shatters. Asgore will inspire you to stay determined! Be wary though, there's a small chance that certain enemies will tell you to get dunked on!
 
-Bug? Suggestion? Contact me on Discord: Mining#7477
+**NOTES**
+If you're using Calamity, or a similar mod, which shortens the respawn timer, there's a toggle in the config to support short respawn times. This reduces the animation to only the SOUL shattering (3 seconds).
 
-**IMPORTANT**
------------------------------------------
-If you are playing a mod (eg Calamity) which shortens the respawn time please read:
+If you found a bug, please message me on Discord: Mining#7477
 
-There is a toggle in the config to support shorter respawn times. This limits the animation to only the SOUL shattering (3 seconds). Undertale Gameover is compatible with short respawn times, but some may find it inconvient as the animation duration is same as vanilla respawn time.
-
-
-Credits: 
-
-Mod by: Noah Frederick (nfrederick023) aka Mining  
-Original concept (Undertale Death Screen) by Master Weller (aka Adam Turquoise). 
+Mod by Noah Frederick (nfrederick023) aka Mining.  
+Original concept (Undertale Death Screen) by Master Weller aka Adam Turquoise.
