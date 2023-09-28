@@ -9,11 +9,13 @@ namespace UndertaleDeathPlayerNamespace
     {
         public override void Kill(double damage, int hitDirection, bool pvp, PlayerDeathReason damageSource)
         {
-            GameOverUI.ActivateGameOver();
+            if (Player == Main.LocalPlayer)
+                GameOverUI.ActivateGameOver();
         }
         public override void OnRespawn(Player player)
         {
-            GameOverUI.EndGameOver();
+            if (GameOverUI.isVisible)
+                GameOverUI.EndGameOver();
         }
 
         public override bool CanUseItem(Item item)
