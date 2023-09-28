@@ -7,8 +7,8 @@ namespace ConfigOptionsNamespace
     {
         public override ConfigScope Mode => ConfigScope.ClientSide;
 
-        [Label("Shorter Gameover Screen (eg for Calamity)")]
-        [Tooltip("Supports short respawn times.")]
+        [LabelKey("Shorter Gameover Screen (eg for Calamity)")]
+        [TooltipKey("Supports short respawn times.")]
         [DefaultValue(false)]
         public bool isShorterRespawn;
 
