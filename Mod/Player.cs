@@ -14,14 +14,14 @@ namespace UndertaleDeathPlayerNamespace
         }
         public override void OnRespawn(Player player)
         {
-            if (GameOverUI.isVisible)
+            if (GameOverUI.isVisible && Player == Main.LocalPlayer)
                 GameOverUI.EndGameOver();
         }
 
         public override bool CanUseItem(Item item)
         {
             // prevent player from using items if they've respawned before the game over screen is finished (eg Calamity short respawn time)
-            if (GameOverUI.isVisible)
+            if (GameOverUI.isVisible && Player == Main.LocalPlayer)
             {
                 return false;
             }
@@ -31,7 +31,7 @@ namespace UndertaleDeathPlayerNamespace
         public override void PreUpdateMovement()
         {
             // prevent player from moving if they've respawned before the game over screen is finished (eg Calamity short respawn time)
-            if (GameOverUI.isVisible)
+            if (GameOverUI.isVisible && Player == Main.LocalPlayer)
             {
                 Player.velocity.X = 0;
                 Player.velocity.Y = 0;
@@ -41,7 +41,7 @@ namespace UndertaleDeathPlayerNamespace
         public override bool PreHurt(bool pvp, bool quiet, ref int damage, ref int hitDirection, ref bool crit, ref bool customDamage, ref bool playSound, ref bool genGore, ref PlayerDeathReason damageSource, ref int cooldownCounter)
         {
             // prevent the player from being damaged if they've respawned before the game over screen is finished (eg Calamity short respawn time)
-            if (GameOverUI.isVisible)
+            if (GameOverUI.isVisible && Player == Main.LocalPlayer)
             {
                 return false;
             }
