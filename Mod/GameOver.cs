@@ -248,7 +248,7 @@ namespace GameOverUINamespace
                     soundVolume = Main.soundVolume;
                     musicVolume = Main.musicVolume;
                     Main.ambientVolume = 0f;
-                    Main.musicVolume = 0;
+                    Main.musicVolume = 0f;
 
                     gameOverScreen.Append(heart);
                 }

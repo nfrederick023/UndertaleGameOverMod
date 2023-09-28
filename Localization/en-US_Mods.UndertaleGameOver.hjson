@@ -1,0 +1,10 @@
+Configs: {
+	ConfigOptions: {
+		DisplayName: Config Options
+
+		isShorterRespawn: {
+			Label: Shorter Gameover Screen (eg for Calamity)
+			Tooltip: Supports short respawn times.
+		}
+	}
+}

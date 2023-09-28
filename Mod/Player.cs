@@ -9,11 +9,13 @@ namespace UndertaleDeathPlayerNamespace
     {
         public override void Kill(double damage, int hitDirection, bool pvp, PlayerDeathReason damageSource)
         {
-            GameOverUI.ActivateGameOver();
+            if (Player == Main.LocalPlayer)
+                GameOverUI.ActivateGameOver();
         }
-        public override void OnRespawn(Player player)
+        public override void OnRespawn()
         {
-            GameOverUI.EndGameOver();
+            if (Player == Main.LocalPlayer)
+                GameOverUI.EndGameOver();
         }
 
         public override bool CanUseItem(Item item)
@@ -36,14 +38,14 @@ namespace UndertaleDeathPlayerNamespace
             }
         }
 
-        public override bool PreHurt(bool pvp, bool quiet, ref int damage, ref int hitDirection, ref bool crit, ref bool customDamage, ref bool playSound, ref bool genGore, ref PlayerDeathReason damageSource, ref int cooldownCounter)
+        public override bool FreeDodge(Player.HurtInfo info)/* tModPorter Override ImmuneTo, FreeDodge or ConsumableDodge instead to prevent taking damage */
         {
             // prevent the player from being damaged if they've respawned before the game over screen is finished (eg Calamity short respawn time)
             if (GameOverUI.isVisible)
             {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
     }
 }
