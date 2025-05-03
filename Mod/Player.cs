@@ -9,8 +9,20 @@ namespace UndertaleDeathPlayerNamespace
     {
         public override void Kill(double damage, int hitDirection, bool pvp, PlayerDeathReason damageSource)
         {
+            bool killedBySkeleton = false;
+            
+            // if killed by skeleton, armored skeleton, skeletron, skeletron prime, or sniper skeleton
+            if (damageSource != null && damageSource.SourceNPCIndex >= 0)
+            {
+                NPC killer = Main.npc[damageSource.SourceNPCIndex];
+                if (killer.type == 127 || killer.type == 77 || killer.type == 292 || killer.type == 35 | killer.type == 21) 
+                {
+                    killedBySkeleton = true;
+                }
+            }
+
             if (Player == Main.LocalPlayer)
-                GameOverUI.ActivateGameOver();
+                GameOverUI.ActivateGameOver(killedBySkeleton);
         }
         public override void OnRespawn()
         {

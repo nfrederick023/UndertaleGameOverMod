@@ -196,7 +196,7 @@ namespace GameOverUINamespace
             return ModContent.Request<Texture2D>($"{nameof(UndertaleGameOver)}/Img/{currentTextName}/{currentTextFrame}");
         }
 
-        public static void setRandomText()
+        public static void setRandomText(bool killedBySkeleton)
         {
 
             int numberOfTexts = asgoreTexts.Length - 1;
@@ -205,8 +205,8 @@ namespace GameOverUINamespace
             currentTextName = asgoreTexts[selectedText].name;
             maxTextFrames = asgoreTexts[selectedText].frames;
 
-            //if certain skeletons kill the player, run a 5% chance to get dunked on 
-            if (NPC.CountNPCS(35) > 0 || NPC.CountNPCS(127) > 0 || NPC.CountNPCS(21) > 0 || NPC.CountNPCS(77) > 0 || NPC.CountNPCS(292) > 0)
+            //if certain skeletons kill the player, run a 1 in 20 chance to get dunked on 
+            if (killedBySkeleton && ModContent.GetInstance<ConfigOptions>().isDunkedOn)
             {
                 int rollForDunkedOn = rand.Next(0, 20);
                 if (rollForDunkedOn == 0)
@@ -419,9 +419,16 @@ namespace GameOverUINamespace
             }
         }
 
-        public static void ActivateGameOver()
+        public static void ActivateGameOver(bool killedBySkeleton)
         {
-            setRandomText();
+            Color heartColor = ModContent.GetInstance<ConfigOptions>().heartColor;
+            heart.Color = heartColor;
+            brokenHeart.Color = heartColor;
+            for (int i = 0; i < dusts.Length - 1; i++)
+            {
+                dusts[i].dust.Color = heartColor;
+            }
+            setRandomText(killedBySkeleton);
             isVisible = true;
             hasFinished = false;
             timeElapsedInGameTicks = 0;

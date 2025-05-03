@@ -6,5 +6,15 @@ Configs: {
 			Label: Shorter Gameover Screen (eg for Calamity)
 			Tooltip: Supports short respawn times.
 		}
+
+		isDunkedOn: {
+			Label: Dunked On! Easter Egg
+			Tooltip: Enables/Disables the Dunked On! Easter Egg.
+		}
+
+		heartColor: {
+			Label: Heart Color
+			Tooltip: Changes the color of the heart.
+		}
 	}
 }
